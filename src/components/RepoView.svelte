@@ -114,6 +114,19 @@
         <p class="small muted">{r.files} files, {r.javaFiles} Java, {r.testFiles} test classes ({r.javaFiles ? Math.round((r.testFiles / r.javaFiles) * 100) : 0}%). {langs.map(([k, n]) => `${k} ${n}`).join(' · ')}</p>
       </section>
 
+      {#if app.status?.riskModel}
+        {@const m = app.status.riskModel}
+        <section class="pcard">
+          <h2>Risk model</h2>
+          {#if m.ready}
+            <p class="small">Learned from {m.commits} commits, {m.positives} of which later needed a fix. On the newest quarter, held out while learning, it ranks a bug-bringing commit above a safe one {Math.round((m.auc ?? 0) * 100)}% of the time (50% is chance). The AI reads the riskiest recent commits first.</p>
+            <p class="hint">Strongest signals: {(m.signals ?? []).join('; ')}.</p>
+          {:else}
+            <p class="small muted">Not used: {m.reason}</p>
+          {/if}
+        </section>
+      {/if}
+
       <section class="pcard">
         <h2>Hotspots</h2>
         <p class="hint">Files that change most, ranked higher when they also have open issues. Top {r.hotspots.length} shown.</p>

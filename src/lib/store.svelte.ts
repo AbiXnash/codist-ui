@@ -733,6 +733,11 @@ export function connect() {
     if (d.sha === app.selectedSha) await refreshDetail();
   });
 
+  // The server learned something new about the repository, such as the risk model.
+  es.addEventListener('status', async () => {
+    await Promise.all([loadStatus(), loadCommits()]);
+  });
+
   es.addEventListener('behaviour', async (e) => {
     const d = JSON.parse((e as MessageEvent).data) as { sha: string; status: string; differ?: number };
     if (d.sha === app.selectedSha) await refreshDetail();

@@ -126,6 +126,7 @@
               {#if r.introduced.length - openCount > 0}<span class="pill good">{r.introduced.length - openCount} closed</span>{/if}
               {#if r.fixed.length}<span class="pill good">✓ fixed {r.fixed.length}</span>{/if}
               {#if c.messageProblem}<span class="pill warn" title="The commit message could be clearer">message</span>{/if}
+              {#if c.risk === 'high'}<span class="pill warn" title="Learned from this repository's history: changes like this one have often needed fixes later">high risk</span>{/if}
             </span>
           </button>
           {#if open[c.commit.sha]}

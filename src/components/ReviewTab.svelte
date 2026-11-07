@@ -107,7 +107,7 @@
         <span class="bad">Review failed</span>
         <button class="btn secondary sm" onclick={() => requestReview(c.sha)}>Retry</button>
       {:else}
-        <span class="risk {r.risk}">{r.risk} risk</span>
+        {#if r.risk}<span class="risk {r.risk}" title="Learned from this repository's history: how often changes like this one needed fixes later">{r.risk} risk</span>{/if}
         {#each counts as [s, n]}<span class="sev {s}">{n} {s}</span>{:else}<span class="clean">No issues</span>{/each}
         <span class="spacer"></span>
         {#if ignoredCount}

@@ -23,7 +23,18 @@ export interface Working {
   findings: number;
 }
 
+/** What Codist learned about which commits tend to bring bugs in this repository. */
+export interface RiskModel {
+  ready: boolean;
+  reason?: string;
+  auc?: number;
+  commits?: number;
+  positives?: number;
+  signals?: string[];
+}
+
 export interface Status {
+  riskModel?: RiskModel;
   repo: string;
   path: string;
   branch: string;
