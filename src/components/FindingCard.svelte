@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { accordion } from '../lib/motion';
   import CopyButton from './CopyButton.svelte';
   import { app, judgeFinding, openFile, openProposal, proposeFix } from '../lib/store.svelte';
   import { api } from '../lib/api';
@@ -50,7 +51,7 @@
     {/if}
   </button>
   {#if expanded}
-    <div class="body">
+    <div class="body" transition:accordion>
       {#if f.doubt}<p class="muted">Unconfirmed: {f.doubt}</p>{/if}
       {#if lead.detail}<p>{lead.detail}</p>{/if}
       {#if many}

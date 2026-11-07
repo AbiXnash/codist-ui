@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { accordion , pill } from '../lib/motion';
   import WorkingPlan from './WorkingPlan.svelte';
   import { app, pickIssue, saveStr, selectCommit, showWorking } from '../lib/store.svelte';
   import { ago, SEVERITIES, SEVERITY_COLOR } from '../lib/theme';
@@ -87,7 +88,7 @@
 <div class="commits">
   <div class="top">
     <div class="row">
-      <div class="seg" role="tablist" aria-label="Whose commits">
+      <div class="seg" role="tablist" aria-label="Whose commits" use:pill={{ active: '.on', bg: 'var(--surface-3)' }}>
         <button role="tab" aria-selected={app.history === 'mine'} class:on={app.history === 'mine'} disabled={!app.me} onclick={() => setHistory('mine')}>Mine</button>
         <button role="tab" aria-selected={app.history === 'everyone'} class:on={app.history === 'everyone'} onclick={() => setHistory('everyone')}>Everyone</button>
       </div>
@@ -165,7 +166,7 @@
             </span>
           </button>
           {#if open[c.commit.sha]}
-            <div class="related">
+            <div class="related" transition:accordion>
               {#if r.introduced.length}
                 <div class="h">Introduced here</div>
                 {#each r.introduced as i (i.id)}

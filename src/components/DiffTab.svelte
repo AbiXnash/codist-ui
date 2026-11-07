@@ -45,7 +45,7 @@
   .file { margin-bottom: 8px; border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
   .file-head { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 8px; background: var(--surface-2); cursor: pointer; }
   .file-head:hover { background: var(--surface-3); }
-  .chev { color: var(--text-3); transition: transform 0.15s var(--ease); flex-shrink: 0; }
+  .chev { color: var(--text-3); transition: transform var(--t-open) var(--t-ease); flex-shrink: 0; }
   .chev.open { transform: rotate(90deg); }
   .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ct { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 4px; font: 600 10.5px var(--mono); }

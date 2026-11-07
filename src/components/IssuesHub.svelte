@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { pill } from '../lib/motion';
   import { app, issueAction, openFile, pickIssue, proposeFix, selectCommit, showWorking } from '../lib/store.svelte';
   import { ago, INSTANT_REFS, NOT_FIXABLE, SEVERITIES } from '../lib/theme';
   import CommitRef from './CommitRef.svelte';
@@ -182,7 +183,7 @@
       </div>
       {#if filtersOpen}
         <div class="filters">
-      <div class="scope seg" role="tablist" aria-label="Scope">
+      <div class="scope seg" role="tablist" aria-label="Scope" use:pill={{ active: '.on', bg: 'var(--surface-3)' }}>
         <button class:on={app.scope === 'all'} onclick={() => setScope('all')} title="Every issue in the codebase">All code</button>
         <button class:on={app.scope === 'commit'} disabled={!app.selectedSha} onclick={() => setScope('commit')} title="Introduced or fixed in the selected commit">
           This commit{#if app.selectedSha}<span class="mono faint sha">{app.selectedSha.slice(0, 7)}</span>{/if}

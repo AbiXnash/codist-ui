@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { pill } from '../lib/motion';
   import { app } from '../lib/store.svelte';
   import CommitsTab from './CommitsTab.svelte';
   import GraphPanel from './GraphPanel.svelte';
@@ -6,7 +7,7 @@
 
 <aside class="dock">
   {#if app.mode === 'graph' && app.featureOn('explorer')}
-  <div class="tabs" role="tablist">
+  <div class="tabs" role="tablist" use:pill={{ active: '.on', bg: 'var(--surface-2)' }}>
     <button role="tab" aria-selected={app.left === 'commits' || app.mode !== 'graph'} class:on={app.left === 'commits' || app.mode !== 'graph'} onclick={() => (app.left = 'commits')}>Commits <span class="n">{app.shownCommits.length}</span></button>
     <button role="tab" aria-selected={app.left === 'explorer'} class:on={app.left === 'explorer'} onclick={() => (app.left = 'explorer')}>Explorer <span class="n">{app.graphView.nodes.length}</span></button>
   </div>

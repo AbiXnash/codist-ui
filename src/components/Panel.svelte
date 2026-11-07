@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { pill } from '../lib/motion';
   import { app } from '../lib/store.svelte';
   import type { Tab } from '../lib/types';
   import IssuesHub from './IssuesHub.svelte';
@@ -26,7 +27,7 @@
 
 <section class="panel">
   <div class="tabs">
-    <div class="pills" role="tablist">
+    <div class="pills" role="tablist" use:pill={{ active: '.active', bg: 'var(--surface-2)' }}>
     {#each tabs as t, i (t.id)}
       <button role="tab" aria-selected={app.tab === t.id} class:active={app.tab === t.id || (t.id === 'review' && onCommit)} onclick={() => (app.tab = t.id)} title="{t.label}  {i + 1}">
         {t.label}

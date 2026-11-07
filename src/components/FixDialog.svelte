@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { modal, scrim } from '../lib/motion';
   import type { FixCheck } from '../lib/types';
   import { app, applyFix, closeFix, toast } from '../lib/store.svelte';
   import { api } from '../lib/api';
@@ -106,8 +107,8 @@
 {#if app.fix}
   {@const f = app.fix}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="backdrop" onclick={() => { if (!f.busy && !f.proposal) closeFix(); }}></div>
-  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="fix-title">
+  <div class="backdrop" transition:scrim onclick={() => { if (!f.busy && !f.proposal) closeFix(); }}></div>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="fix-title" transition:modal={{ base: 'translate(-50%, -50%)' }}>
     <header>
       <div>
         <h2 id="fix-title">Fix: {f.finding.title}</h2>

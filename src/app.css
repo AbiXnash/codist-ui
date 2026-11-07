@@ -97,6 +97,10 @@
   --r: 7px;
   --r-lg: 11px;
   --ease: cubic-bezier(0.2, 0, 0, 1);
+  /* Motion from transitions.dev: one ease and two clocks, opening slower than closing. */
+  --t-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --t-open: 250ms;
+  --t-close: 150ms;
   --panel-w: min(380px, 30vw);
   --side-w: 260px;
 }
@@ -132,7 +136,7 @@ code, pre, .mono { font-family: var(--mono); font-size: 12px; font-variant-ligat
   font-weight: 500;
   font-size: 12.5px;
   white-space: nowrap;
-  transition: filter 0.15s;
+  transition: filter var(--t-close) var(--t-ease), background-color var(--t-close) var(--t-ease), box-shadow var(--t-close) var(--t-ease);
 }
 .btn:hover { filter: brightness(1.1); }
 .btn.secondary { background: var(--surface-3); color: var(--text); border-color: transparent; box-shadow: var(--raised); }
@@ -148,7 +152,7 @@ code, pre, .mono { font-family: var(--mono); font-size: 12px; font-variant-ligat
   border-radius: var(--r);
   background: none;
   color: var(--text-3);
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--t-close) var(--t-ease), color var(--t-close) var(--t-ease);
 }
 .icon-btn:hover { background: var(--hover); color: var(--text); }
 .icon-btn.on { color: var(--text); background: var(--active); }
@@ -271,3 +275,12 @@ kbd {
 .bar-row i { display: block; height: 7px; border-radius: 4px; background: var(--accent); }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation-duration: 0.01ms !important; } }
+
+/* transitions.dev tabs sliding: the pill moves; the selected button only changes its text. */
+.t-pill {
+  position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none; border-radius: inherit;
+  box-shadow: var(--raised);
+  transition: transform var(--t-open) var(--t-ease), width var(--t-open) var(--t-ease), height var(--t-open) var(--t-ease), opacity var(--t-close) var(--t-ease);
+}
+.t-pilled > :not(.t-pill) { position: relative; z-index: 1; }
+.t-pilled > button.on, .t-pilled > button.active { background: transparent !important; box-shadow: none !important; }

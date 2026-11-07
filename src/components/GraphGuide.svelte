@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { modal, scrim } from '../lib/motion';
   import { app } from '../lib/store.svelte';
   import { SEVERITY_COLOR, STATE_COLOR, STEREOTYPE } from '../lib/theme';
   import Glyph from './Glyph.svelte';
@@ -34,8 +35,8 @@
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-<div class="scrim" onclick={() => (app.showGuide = false)}>
-  <div class="guide" role="dialog" aria-label="How to read the graph" tabindex="-1" onclick={(e) => e.stopPropagation()}>
+<div class="scrim" transition:scrim onclick={() => (app.showGuide = false)}>
+  <div class="guide" transition:modal role="dialog" aria-label="How to read the graph" tabindex="-1" onclick={(e) => e.stopPropagation()}>
     <header>
       <h2>How to read the graph</h2>
       <button class="x" aria-label="Close" onclick={() => (app.showGuide = false)}>×</button>

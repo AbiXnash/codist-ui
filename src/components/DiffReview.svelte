@@ -197,7 +197,7 @@
   .file { flex-shrink: 0; container-type: inline-size; border-radius: var(--r-lg); background: var(--surface); box-shadow: 0 0 0 1px var(--border); overflow: clip; }
   .head { position: sticky; top: -18px; z-index: 2; display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 8px 0 4px; background: var(--surface-2); border-bottom: 1px solid var(--border); }
   .toggle { flex: 1; min-width: 0; display: flex; align-items: center; gap: 7px; height: 36px; padding: 0 6px; border: 0; background: none; text-align: left; }
-  .chev { flex-shrink: 0; color: var(--text-3); transition: transform 0.12s var(--ease); }
+  .chev { flex-shrink: 0; color: var(--text-3); transition: transform var(--t-open) var(--t-ease); }
   .chev.open { transform: rotate(90deg); }
   .path { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
   .n { font-size: 12px; color: var(--mark); font-weight: 500; white-space: nowrap; }

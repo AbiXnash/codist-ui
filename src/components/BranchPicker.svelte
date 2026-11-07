@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dropdown } from '../lib/motion';
   import { app, followBranch, saveStr } from '../lib/store.svelte';
   import { api } from '../lib/api';
   import { ago } from '../lib/theme';
@@ -36,7 +37,7 @@
     <button class="back mono" title="Go back to the checked-out branch" onclick={() => pick(app.status!.checkedOut!)}>back to {app.status.checkedOut}</button>
   {/if}
   {#if open}
-    <div class="menu" role="menu">
+    <div class="menu" role="menu" transition:dropdown>
       <input bind:value={query} placeholder="Find a branch…" spellcheck="false" />
       <ul>
         {#each shown as r (r.name)}
