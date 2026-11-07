@@ -33,7 +33,7 @@
       <h3>Does well</h3>
       {#each p.strengths as s}
         <div class="point"><b>{s.title}</b><p>{s.detail}</p></div>
-      {:else}<p class="faint">Nothing stands out yet. This needs more reviewed work, or simply has not come up.</p>{/each}
+      {:else}<p class="faint">Nothing stands out yet. This needs more reviewed work, or it has not come up.</p>{/each}
     </section>
     <section class="pcard">
       <h3>To work on</h3>
