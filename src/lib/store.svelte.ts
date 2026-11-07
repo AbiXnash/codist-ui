@@ -740,6 +740,8 @@ export function connect() {
 
   es.addEventListener('behaviour', async (e) => {
     const d = JSON.parse((e as MessageEvent).data) as { sha: string; status: string; differ?: number };
+    const lane = (d.differ ? 'differs' : d.status) as CommitItem['behaviour'];
+    app.commits = app.commits.map((c) => (c.commit.sha === d.sha ? { ...c, behaviour: lane } : c));
     if (d.sha === app.selectedSha) await refreshDetail();
     if (d.status === 'done' && d.differ) toast(`${d.differ} call${d.differ > 1 ? 's' : ''} in ${d.sha.slice(0, 7)} now behave differently`, 'warn', 6000);
   });

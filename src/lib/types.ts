@@ -42,6 +42,7 @@ export interface Status {
   checkedOut?: string;
   tracking: string;
   head: string;
+  behaviour?: boolean; // behaviour runs are on
   model: string;
   llmProblem: string;
   graphSource: string;
@@ -121,6 +122,8 @@ export interface CommitItem {
   counts?: Partial<Record<Severity, number>>;
   fixed?: number;
   messageProblem?: boolean;
+  model?: string; // the model that read it; absent until the model lane has
+  behaviour?: 'queued' | 'running' | 'done' | 'differs' | 'skipped' | 'failed';
 }
 
 export interface FileChange {

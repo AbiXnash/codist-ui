@@ -58,6 +58,29 @@
     open[c.commit.sha] = !open[c.commit.sha];
   }
   const name = (p: string) => p.slice(p.lastIndexOf('/') + 1);
+
+  // Each commit goes through three lanes: code checks, the AI model, and behaviour runs. Until all are done the
+  // marker is a ring with one third per lane, filled in the lane's colour once that lane has finished; when all
+  // three are done it becomes a solid dot in the colour of the worst issue, or green when clean.
+  type Lane = 'done' | 'busy' | 'waiting' | 'differs';
+  function lanes(c: CommitItem): { checks: Lane; model: Lane; run: Lane } {
+    const busy = (s?: string) => s === 'running' || s === 'queued';
+    const checks: Lane = c.status === 'done' || c.status === 'failed' ? 'done' : busy(c.status) ? 'busy' : 'waiting';
+    const model: Lane = c.model || !app.status?.model ? 'done' : c.status === 'running' ? 'busy' : 'waiting';
+    const b = c.behaviour;
+    const run: Lane = !app.status?.behaviour || b === 'done' || b === 'skipped' || b === 'failed' ? 'done'
+      : b === 'differs' ? 'differs' : busy(b) ? 'busy' : 'waiting';
+    return { checks, model, run };
+  }
+  const LANE_TEXT: Record<Lane, string> = { done: 'done', busy: 'working', waiting: 'waiting', differs: 'found a change' };
+  function ring(l: ReturnType<typeof lanes>) {
+    const seg = (s: Lane, color: string) => (s === 'done' ? color : s === 'differs' ? 'var(--bad)' : 'var(--border-strong)');
+    return `conic-gradient(${seg(l.checks, 'var(--lane-checks)')} 0 118deg, transparent 118deg 122deg, ` +
+      `${seg(l.model, 'var(--lane-model)')} 122deg 238deg, transparent 238deg 242deg, ${seg(l.run, 'var(--lane-run)')} 242deg 358deg, transparent 358deg)`;
+  }
+  const allDone = (l: ReturnType<typeof lanes>) => l.checks === 'done' && l.model === 'done' && (l.run === 'done' || l.run === 'differs');
+  const laneTitle = (l: ReturnType<typeof lanes>) =>
+    `Code checks: ${LANE_TEXT[l.checks]}\nAI model: ${LANE_TEXT[l.model]}\nBehaviour runs: ${LANE_TEXT[l.run]}`;
   const stateText = (i: Issue) => (i.state === 'resolved' ? (i.fixedIn ? `fixed in ${i.fixedIn.slice(0, 7)}` : 'fixed') : i.state === 'ignored' ? 'ignored' : i.reopenedIn ? 'reopened' : 'open');
 </script>
 
@@ -89,6 +112,13 @@
     </div>
   </div>
 
+  <div class="legend" aria-label="What the commit markers mean">
+    <span><i style:background="var(--lane-checks)"></i>Checks</span>
+    <span><i style:background="var(--lane-model)"></i>AI model</span>
+    <span><i style:background="var(--lane-run)"></i>Behaviour</span>
+    <span><i class="solid"></i>All done</span>
+  </div>
+
   <ol class="timeline">
     {#if app.working?.changes.length}
       {@const n = app.working.findings}
@@ -107,8 +137,13 @@
       {@const w = worst(c)}
       {@const selected = c.commit.sha === app.selectedSha && app.scope !== 'working'}
       {@const openCount = openOf(c)}
+      {@const l = lanes(c)}
       <li class:selected class:last={idx === shown.length - 1}>
-        <span class="node" style:--c={w ? SEVERITY_COLOR[w] : c.status === 'done' ? 'var(--good)' : 'var(--text-3)'} class:hollow={c.status !== 'done'} class:spin={c.status === 'running' || c.status === 'queued'}></span>
+        {#if allDone(l)}
+          <span class="node" style:--c={w ? SEVERITY_COLOR[w] : l.run === 'differs' ? 'var(--bad)' : 'var(--good)'} title={laneTitle(l)}></span>
+        {:else}
+          <span class="node ring" style:background={ring(l)} class:busy={l.checks === 'busy' || l.model === 'busy' || l.run === 'busy'} title={laneTitle(l)}></span>
+        {/if}
         <div class="card">
           <button class="item" aria-expanded={!!open[c.commit.sha]} onclick={() => pick(c)}>
             <span class="msg">{c.commit.message}</span>
@@ -186,6 +221,14 @@
   .timeline li.last::before, .timeline li.empty::before { display: none; }
   .node { position: absolute; left: 5px; top: 13px; width: 9px; height: 9px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 3px var(--surface); z-index: 1; }
   .node.hollow { background: var(--surface); border: 1.5px solid var(--c); }
+  .node.ring { width: 11px; height: 11px; left: 4px; top: 12px; -webkit-mask: radial-gradient(circle, transparent 2.6px, #000 3px); mask: radial-gradient(circle, transparent 2.6px, #000 3px); box-shadow: none; }
+  .node.ring.busy { animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.45; } }
+  @media (prefers-reduced-motion: reduce) { .node.ring.busy { animation: none; } }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 6px 14px 0; font-size: 10.5px; color: var(--text-3); }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend i { width: 8px; height: 8px; border-radius: 2px; }
+  .legend i.solid { border-radius: 50%; background: var(--good); }
   .node.spin { border-color: var(--accent); border-right-color: transparent; animation: spin 0.8s linear infinite; }
   .card { border: 1px solid transparent; border-radius: var(--r-lg); margin-bottom: 2px; }
   .selected .card { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
