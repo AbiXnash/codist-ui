@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ThinkingOrb from './ThinkingOrb.svelte';
   import { app, loadIncidents, openFile, openIncident, openProposal, showCommit, selectNode, toast } from '../lib/store.svelte';
   import { api } from '../lib/api';
   import { ago } from '../lib/theme';
@@ -98,7 +99,7 @@
     <div class="eyebrow">Incident · {ago(inc.createdAt)} · {occurrences} occurrence{occurrences === 1 ? '' : 's'} in {(inc.logBytes / 1024).toFixed(0)} KB of logs</div>
     <h1>{inc.title}</h1>
     <div class="status">
-      {#if inc.status === 'analysing'}<span class="spinner"></span> Analysing with {inc.model}… the evidence below fills in first.
+      {#if inc.status === 'analysing'}<ThinkingOrb state="searching" /> Analysing with {inc.model}… the evidence below fills in first.
       {:else if inc.status === 'confirmed'}<span class="pill ok">Root cause confirmed</span>
       {:else if inc.status === 'failed'}<span class="pill bad">Analysis failed</span>
       {:else}<span class="pill">Analysis ready</span>{/if}

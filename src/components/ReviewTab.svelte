@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ThinkingOrb from './ThinkingOrb.svelte';
   import { app, loadCommits, openFile, requestReview, selectCommit, selectNode, toast } from '../lib/store.svelte';
   import { ago, SEVERITIES, shortName } from '../lib/theme';
   import FindingCard from './FindingCard.svelte';
@@ -90,7 +91,7 @@
         <span class="muted">Not reviewed.</span>
         <button class="btn sm" onclick={() => requestReview(c.sha)}>Review</button>
       {:else if r.status === 'queued' || r.status === 'running'}
-        <span class="spinner"></span>
+        <ThinkingOrb state={r?.status === 'running' ? 'solving' : 'breathing'} />
         <span class="muted">
           {#if r.status === 'queued'}Queued{:else}
             {@const pending = r.files.filter((f) => f.pending).length}
@@ -173,7 +174,7 @@
           {#if r.status === 'done' && !pending.length}<p class="faint none">No new issues.</p>{/if}
         {/each}
         {/if}
-        {#each pending as f (f.path)}<p class="faint pending"><span class="spinner inline"></span>AI reviewing {f.path.split('/').pop()}…</p>{/each}
+        {#each pending as f (f.path)}<p class="faint pending"><ThinkingOrb state="solving" /> AI reviewing {f.path.split('/').pop()}…</p>{/each}
         {#each errors as f (f.path)}<p class="error mono">{f.path.split('/').pop()}: {f.error}</p>{/each}
       </section>
 

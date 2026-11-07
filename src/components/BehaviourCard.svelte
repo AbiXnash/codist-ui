@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ThinkingOrb from './ThinkingOrb.svelte';
   import type { Behaviour } from '../lib/types';
   import { requestBehaviour } from '../lib/store.svelte';
   import { shortName } from '../lib/theme';
@@ -38,7 +39,7 @@
   </div>
 
   {#if b.status === 'queued' || b.status === 'running'}
-    <p class="faint"><span class="spinner inline"></span>{b.status === 'queued' ? 'Waiting to run' : 'Running'} the changed methods before and after this commit…</p>
+    <p class="faint"><ThinkingOrb state={b.status === 'queued' ? 'breathing' : 'weaving'} /> {b.status === 'queued' ? 'Waiting to run' : 'Running'} the changed methods before and after this commit…</p>
   {:else if b.status === 'skipped' || b.status === 'failed'}
     <p class="faint">{b.status === 'failed' ? 'Could not finish: ' : 'Not run: '}{b.reason}</p>
   {:else}
@@ -77,5 +78,4 @@
   .tag { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); line-height: 18px; }
   .tag.after { color: var(--warn); }
   .link { padding: 0; border: 0; background: none; font-size: 12px; color: var(--accent-text); }
-  .spinner.inline { display: inline-block; width: 10px; height: 10px; vertical-align: -1px; margin-right: 4px; }
 </style>

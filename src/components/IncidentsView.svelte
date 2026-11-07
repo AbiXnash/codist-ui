@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ThinkingOrb from './ThinkingOrb.svelte';
   import { onMount } from 'svelte';
   import { app, loadIncidents, openIncident, toast } from '../lib/store.svelte';
   import { api } from '../lib/api';
@@ -57,7 +58,7 @@
           <button class="item" class:selected={i.id === app.incidentId} onclick={() => openIncident(i.id)}>
             <span class="t">{i.title}</span>
             <span class="meta">
-              {#if i.status === 'analysing'}<span class="spinner"></span> analysing{:else if i.confirmed}<span class="ok">✓ root cause confirmed</span>{:else if i.status === 'failed'}<span class="bad">failed</span>{:else}{i.occurrences} occurrence{i.occurrences === 1 ? '' : 's'}{/if}
+              {#if i.status === 'analysing'}<ThinkingOrb state="searching" /> analysing{:else if i.confirmed}<span class="ok">✓ root cause confirmed</span>{:else if i.status === 'failed'}<span class="bad">failed</span>{:else}{i.occurrences} occurrence{i.occurrences === 1 ? '' : 's'}{/if}
               <span class="time">{ago(i.createdAt)}</span>
             </span>
             {#if i.topCause}<span class="cause">{i.topCause}</span>{/if}

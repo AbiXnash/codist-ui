@@ -15,7 +15,8 @@
     "cytoscape": "^3.34.4",
     "cytoscape-fcose": "^2.2.0",
     "shiki": "^4.5.0",
-    "svelte": "^5.57.3"
+    "svelte": "^5.57.3",
+    "thinking-orbs": "0.3.2"
   },
   "overrides": {
     "deepmerge": "$deepmerge"
