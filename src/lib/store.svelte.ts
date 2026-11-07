@@ -466,6 +466,15 @@ export async function refreshDetail() {
   }
 }
 
+export async function requestBehaviour(sha: string) {
+  try {
+    await api.behaviour(sha);
+    toast('Running the changed methods');
+  } catch (e) {
+    toast((e as Error).message, 'bad');
+  }
+}
+
 export async function requestReview(sha: string) {
   try {
     const r = await api.review(sha);
@@ -707,6 +716,12 @@ export function connect() {
   es.addEventListener('fix-ready', async (e) => {
     const d = JSON.parse((e as MessageEvent).data) as { sha: string };
     if (d.sha === app.selectedSha) await refreshDetail();
+  });
+
+  es.addEventListener('behaviour', async (e) => {
+    const d = JSON.parse((e as MessageEvent).data) as { sha: string; status: string; differ?: number };
+    if (d.sha === app.selectedSha) await refreshDetail();
+    if (d.status === 'done' && d.differ) toast(`${d.differ} call${d.differ > 1 ? 's' : ''} in ${d.sha.slice(0, 7)} now behave differently`, 'warn', 6000);
   });
 
   es.addEventListener('review', async (e) => {

@@ -238,9 +238,36 @@ export interface Review {
   analysisProblems?: string[];
 }
 
+/** One call whose result differs between the code before and after a commit. */
+export interface BehaviourDifference {
+  method: string;
+  call: string;
+  old: string;
+  new: string;
+}
+
+/** What running the changed methods before and after a commit showed. Null when the setting is off. */
+export interface Behaviour {
+  sha: string;
+  status: 'queued' | 'running' | 'done' | 'skipped' | 'failed';
+  reason?: string;
+  module?: string;
+  methods?: string[];
+  calls?: number;
+  ran?: number;
+  differ?: number;
+  flaky?: number;
+  stateOnly?: number;
+  nullOnly?: number;
+  differences?: BehaviourDifference[];
+  notes?: string[];
+  took?: number;
+}
+
 export interface Detail {
   analysis: Analysis;
   review: Review | null;
+  behaviour?: Behaviour | null;
   /** path|line|title -> "instant" (mechanical) or "ready" (prepared by the model). */
   fixes: Record<string, 'instant' | 'ready'>;
   /** Earlier issues this commit fixed. */

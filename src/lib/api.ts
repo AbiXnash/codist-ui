@@ -62,6 +62,7 @@ export const api = {
   working: () => request<Working>('/working'),
   issues: (state: string) => request<IssueList>(`/issues?state=${state}`),
   review: (sha: string) => request<{ sha: string; queued: boolean }>(`/commits/${sha}/review`, { method: 'POST' }),
+  behaviour: (sha: string) => request<{ sha: string; queued: boolean }>(`/commits/${sha}/behaviour`, { method: 'POST' }),
   proposeFix: (body: { sha: string; path: string; line: number; title: string; guidance?: string; also?: FixRef[] }) =>
     request<FixProposal & { blocked?: boolean; error?: string }>('/fix', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
   checkFix: (id: string) => request<FixCheck>(`/fix/${id}/check`, { method: 'POST' }),

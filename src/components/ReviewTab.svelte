@@ -5,6 +5,7 @@
   import CommitRef from './CommitRef.svelte';
   import CopyButton from './CopyButton.svelte';
   import ImpactCard from './ImpactCard.svelte';
+  import BehaviourCard from './BehaviourCard.svelte';
   import { api } from '../lib/api';
 
   const d = $derived(app.detail);
@@ -154,6 +155,8 @@
         </div>
       {/if}
     </section>
+
+    {#if d.behaviour}<BehaviourCard b={d.behaviour} />{/if}
 
     {#if r}
       {@const pending = r.files.filter((f) => f.pending)}
