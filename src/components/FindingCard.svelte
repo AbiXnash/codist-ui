@@ -1,8 +1,8 @@
 <script lang="ts">
   import CopyButton from './CopyButton.svelte';
-  import { app, ignoreFinding, openFile, openProposal, proposeFix, unignore } from '../lib/store.svelte';
+  import { app, judgeFinding, openFile, openProposal, proposeFix } from '../lib/store.svelte';
   import { api } from '../lib/api';
-  import type { FindingWithPath, IgnoreScope } from '../lib/types';
+  import type { FindingWithPath } from '../lib/types';
   import CodeBlock from './CodeBlock.svelte';
   import CommitRef from './CommitRef.svelte';
   import FixSuggest from './FixSuggest.svelte';
@@ -11,8 +11,6 @@
   // `members` are every place of the same issue (root first); a single finding is an issue of one.
   let { f, members = [f], showPath = true }: { f: FindingWithPath; members?: FindingWithPath[]; showPath?: boolean } = $props();
   let expanded = $state(false);
-  let menu = $state(false);
-  let team = $state(false);
 
   const files = $derived([...new Set(members.map((m) => m.path))]);
   // Prefer a rule's explanation and fix over the model's: they are precise and what Fix applies.
@@ -24,19 +22,15 @@
   const carried = $derived(!!f.firstSeen && f.firstSeen !== app.selectedSha);
   const many = $derived(members.length > 1);
   const ref = $derived(members.find((m) => m.ref)?.ref);
+  const judge = (verdict: '' | 'useful' | 'wrong') => void judgeFinding(members, verdict);
   const name = (p: string) => p.slice(p.lastIndexOf('/') + 1);
 
   function open(m: FindingWithPath, e?: MouseEvent) {
     e?.stopPropagation();
     void openFile(m.path, app.selectedSha, m.line);
   }
-  function ignore(scope: IgnoreScope) {
-    menu = false;
-    void ignoreFinding(members, scope, team && scope !== 'commit');
-  }
 </script>
 
-<svelte:window onclick={() => (menu = false)} />
 
 <div class="finding" class:expanded class:ignored={f.ignored}>
   <button class="row" onclick={() => (expanded = !expanded)} aria-expanded={expanded}>
@@ -75,7 +69,8 @@
       {#if lead.suggestion}<CodeBlock code={lead.suggestion} />{/if}
       <div class="actions">
         {#if f.ignored}
-          <button class="btn secondary sm" onclick={() => f.ignoreId && unignore(f.ignoreId)}>Stop ignoring</button>
+          <span class="faint">{f.feedback === 'wrong' ? 'Marked wrong: set aside and not reported again.' : 'Set aside.'}</span>
+          <button class="btn secondary sm" onclick={(e) => { e.stopPropagation(); judge(''); }}>Undo</button>
         {:else if f.state === 'resolved'}
           <span class="fixed-note">
             {#if f.fixedIn}
@@ -88,7 +83,7 @@
           </span>
         {:else}
           {#if NOT_FIXABLE.has(f.ref ?? '')}
-            <button class="btn secondary sm" title="A heads-up, not a defect: confirm the readers still expect the new value" onclick={(e) => { e.stopPropagation(); void ignoreFinding(members, 'code'); }}>Mark as checked</button>
+            <button class="btn secondary sm" title="A heads-up, not a defect: confirm the readers still expect the new value" onclick={(e) => { e.stopPropagation(); judge('useful'); }}>Mark as checked</button>
           {:else if app.status?.canFix && files.every((p) => p.endsWith('.java'))}
             <button class="btn sm" onclick={(e) => { e.stopPropagation(); void proposeFix(f); }}
               title={readiness === 'instant' ? 'Mechanical fix: opens instantly' : readiness === 'ready' ? 'Prepared in the background: opens instantly' : 'The model writes the fix (20–60 s)'}>
@@ -100,20 +95,12 @@
           {#if app.status?.canFix && f.path.includes('src/main/java/') && (f.category === 'bug' || f.severity === 'critical' || f.severity === 'high')}
             <button class="btn secondary sm" title="Write a test that fails while this bug exists" onclick={(e) => { e.stopPropagation(); void openProposal('Regression test: ' + f.title, f.path, () => api.issueTest({ path: f.path, line: f.line, title: f.title, detail: f.detail })); }}>Regression test</button>
           {/if}
-          <div class="menu-wrap">
-            <button class="btn secondary sm" aria-haspopup="menu" aria-expanded={menu} onclick={(e) => { e.stopPropagation(); menu = !menu; }}>Ignore ▾</button>
-            {#if menu}
-              <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-              <div class="menu" role="menu" tabindex="-1" onclick={(e) => e.stopPropagation()}>
-                <button role="menuitem" onclick={() => ignore('commit')}><b>In this commit</b><span>Hide {many ? `all ${members.length} places` : 'it'} here only</span></button>
-                <button role="menuitem" onclick={() => ignore('code')}><b>On {many ? 'these lines' : 'this line'}, always</b><span>Same code in any later commit</span></button>
-                <button role="menuitem" disabled={!ref} onclick={() => ignore('rule')} title={ref ? '' : 'Only findings with a rule id can be ignored everywhere'}>
-                  <b>This rule everywhere</b><span>{ref ?? 'no rule id'}</span>
-                </button>
-                <label class="team"><input type="checkbox" bind:checked={team} /> Share with the team (.codist/ignore.yaml)</label>
-              </div>
-            {/if}
-          </div>
+          {#if f.issueId}
+            <button class="btn secondary sm" class:on={f.feedback === 'useful'} aria-pressed={f.feedback === 'useful'}
+              title="Right and worth knowing; kept as an example of a good finding" onclick={(e) => { e.stopPropagation(); judge(f.feedback === 'useful' ? '' : 'useful'); }}>Useful</button>
+            <button class="btn secondary sm" title="Not a real problem: set it aside and do not report it again"
+              onclick={(e) => { e.stopPropagation(); judge('wrong'); }}>Wrong</button>
+          {/if}
         {/if}
         <span class="faint meta">{f.category}{ref ? ` · ${ref}` : ''}{f.onChangedLine ? '' : ' · outside changed lines'}</span>
       </div>
@@ -125,6 +112,7 @@
 </div>
 
 <style>
+  .btn.on { border-color: var(--good); color: var(--good); }
   .finding { border-bottom: 1px solid var(--border); }
   .suggest-wrap { padding: 0 4px 10px; }
   .finding.ignored { opacity: 0.6; }
@@ -148,12 +136,4 @@
   .root { margin-left: auto; font-size: 10.5px; color: var(--text-2); white-space: nowrap; }
   .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 11.5px; }
   .meta { margin-left: 4px; }
-  .menu-wrap { position: relative; }
-  .menu { position: absolute; z-index: 30; top: 28px; left: 0; width: 270px; padding: 4px; border: 1px solid var(--border-strong); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow); }
-  .menu button { display: grid; width: 100%; padding: 6px 8px; border: 0; border-radius: var(--r); background: none; text-align: left; }
-  .menu button:hover:not(:disabled) { background: var(--active); }
-  .menu button:disabled { opacity: 0.45; cursor: default; }
-  .menu b { font-weight: 500; font-size: 12.5px; }
-  .menu span { font-size: 11.5px; color: var(--text-3); }
-  .team { display: flex; align-items: center; gap: 6px; padding: 6px 8px 4px; border-top: 1px solid var(--border); margin-top: 4px; color: var(--text-2); font-size: 11.5px; }
 </style>

@@ -140,6 +140,10 @@ export interface Analysis {
 export type ReviewStatus = 'queued' | 'running' | 'done' | 'failed';
 
 export interface Finding {
+  /** The issue this finding belongs to, across commits. */
+  issueId?: string;
+  /** What a person said about the issue: useful, wrong, or nothing yet. */
+  feedback?: '' | 'useful' | 'wrong';
   line: number;
   endLine: number;
   severity: Severity;
@@ -220,8 +224,23 @@ export interface FileReview {
   skipped?: string;
 }
 
+/** What the model cost for one commit, as the model server measured it. */
+export interface ModelStats {
+  promptVersion: string;
+  model: string;
+  calls: number;
+  cached: number;
+  promptTokens: number;
+  replyTokens: number;
+  modelSeconds: number;
+  prefillSeconds: number;
+  decodeSeconds: number;
+  hidden: number;
+}
+
 export interface Review {
   sha: string;
+  modelStats?: ModelStats;
   fileMs?: number;
   status: ReviewStatus;
   model: string;

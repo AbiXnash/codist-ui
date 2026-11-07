@@ -62,6 +62,11 @@
     }
   }
 
+  function duration(sec: number) {
+    if (sec < 60) return `${Math.round(sec)} s`;
+    return `${Math.floor(sec / 60)} min ${Math.round(sec % 60)} s`;
+  }
+
   function focus(id: string) {
     selectNode(id);
     window.dispatchEvent(new CustomEvent('codist:center', { detail: id }));
@@ -114,6 +119,15 @@
 
     {#if r?.status === 'failed' && r.error}<p class="error mono">{r.error}</p>{/if}
     {#if r?.status === 'done' && r.summary}<p class="summary">{r.summary}</p>{/if}
+    {#if r?.modelStats && (r.modelStats.calls || r.modelStats.cached)}
+      {@const s = r.modelStats}
+      <p class="usage faint" title="Measured by the model server. Reading the prompt sets the wait before the first word; writing sets the time per word after it.">
+        {s.model} · {s.calls} call{s.calls === 1 ? '' : 's'}{#if s.cached}, {s.cached} reused from cache{/if}
+        {#if s.calls} · read {s.promptTokens.toLocaleString()} tokens, wrote {s.replyTokens.toLocaleString()}
+          · {duration(s.modelSeconds)}{#if s.decodeSeconds > 0} ({(s.replyTokens / s.decodeSeconds).toFixed(1)} tokens/s){/if}{/if}
+        · prompt {s.promptVersion}
+      </p>
+    {/if}
     {#if r?.analysers?.length || r?.analysisProblems?.length}
       <p class="checked faint" title={(r.analysisProblems ?? []).join('\n')}>
         Checked by Codist rules, the knowledge base{#each r.analysers ?? [] as t}, {t === 'pmd' ? 'PMD' : 'SpotBugs'}{/each} and the model
@@ -225,6 +239,7 @@
   .risk.high { color: var(--bad); }
   .clean { color: var(--good); font-size: 12px; }
   .bad { color: var(--bad); }
+  .usage { margin: 6px 0 0; font-size: 11.5px; }
   .summary { margin: 12px 0 0; color: var(--text-2); line-height: 1.6; }
   .error { margin: 10px 0 0; color: var(--bad); white-space: pre-wrap; font-size: 11.5px; }
 

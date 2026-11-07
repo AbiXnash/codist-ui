@@ -53,6 +53,8 @@ export const api = {
   commitPaths: (files: string[], message: string) => request<{ commit: string }>('/working/commit', json('POST', { files, message })),
   betterMessage: (sha: string) => request<{ message: string; why: string; pushed: boolean }>(`/commits/${sha}/message`, json('POST', {})),
   reword: (sha: string, message: string) => request<{ commit: string; rewritten: number }>(`/commits/${sha}/reword`, json('POST', { message })),
+  feedback: (id: string, verdict: '' | 'useful' | 'wrong', note = '') =>
+    request<{ id: string; feedback: string }>(`/issues/${id}/feedback`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ verdict, note }) }),
   markFixed: (id: string) => fetch(`/api/issues/${id}/resolve`, { method: 'POST' }),
   reopenIssue: (id: string) => fetch(`/api/issues/${id}/resolve`, { method: 'DELETE' }),
   graph: () => request<Graph>('/graph'),

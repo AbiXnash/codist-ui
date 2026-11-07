@@ -500,6 +500,21 @@ export async function ignoreFinding(f: FindingWithPath | FindingWithPath[], scop
   }
 }
 
+/**
+ * Records what a person thinks of a finding. "wrong" sets the issue aside so it is not reported again; "useful" keeps
+ * it; "" takes the judgement back. The judgements are kept as evaluation data.
+ */
+export async function judgeFinding(members: FindingWithPath[], verdict: '' | 'useful' | 'wrong') {
+  const ids = [...new Set(members.map((m) => m.issueId).filter((x): x is string => !!x))];
+  try {
+    for (const id of ids) await api.feedback(id, verdict);
+    toast(verdict === 'wrong' ? 'Marked wrong: set aside and not reported again' : verdict === 'useful' ? 'Marked useful' : 'Judgement taken back', 'good');
+    await Promise.all([refreshDetail(), loadCommits(), loadIssues()]);
+  } catch (e) {
+    toast((e as Error).message, 'bad');
+  }
+}
+
 export async function unignore(id: string) {
   try {
     await api.unignore(id);
