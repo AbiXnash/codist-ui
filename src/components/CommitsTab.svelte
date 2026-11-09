@@ -111,13 +111,12 @@
       {/if}
       <span class="faint n">{shown.length} of {app.shownCommits.length}</span>
     </div>
-  </div>
-
-  <div class="legend" aria-label="What the commit markers mean">
-    <span><i style:background="var(--lane-checks)"></i>Checks</span>
-    <span><i style:background="var(--lane-model)"></i>AI model</span>
-    <span><i style:background="var(--lane-run)"></i>Behaviour</span>
-    <span><i class="solid"></i>All done</span>
+    <div class="legend" aria-label="What the commit markers mean">
+      <span><i style:background="var(--lane-checks)"></i>Checks</span>
+      <span><i style:background="var(--lane-model)"></i>AI model</span>
+      <span><i style:background="var(--lane-run)"></i>Behaviour</span>
+      <span><i class="solid"></i>All done</span>
+    </div>
   </div>
 
   <ol class="timeline">
@@ -226,7 +225,7 @@
   .node.ring.busy { animation: pulse 1.4s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: 0.45; } }
   @media (prefers-reduced-motion: reduce) { .node.ring.busy { animation: none; } }
-  .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 6px 14px 0; font-size: 10.5px; color: var(--text-3); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 0 2px; font-size: 10.5px; color: var(--text-3); }
   .legend span { display: inline-flex; align-items: center; gap: 5px; }
   .legend i { width: 8px; height: 8px; border-radius: 2px; }
   .legend i.solid { border-radius: 50%; background: var(--good); }
