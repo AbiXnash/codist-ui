@@ -1,3 +1,3 @@
-module github.com/AbiXnash/codist-ui
+module github.com/abxengg/codist-ui
 
 go 1.26.0
