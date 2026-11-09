@@ -1,4 +1,4 @@
-import type { FixCheck, CallLink, ImpactReport, Activity, TeamReport, Flags, PeopleReport, HistoryCommit, BranchRef, BranchReport, MemoryItem, MemoryReport, PlannedCommit, RepoReport, FixRef, Working, CommitItem, DependencyReport, Detail, FixProposal, Graph, Incident, IncidentRow, IssueList, RcaReport, ReleaseReport, Status } from './types';
+import type { LaneView, LogEntry, FixCheck, CallLink, ImpactReport, Activity, TeamReport, Flags, PeopleReport, HistoryCommit, BranchRef, BranchReport, MemoryItem, MemoryReport, PlannedCommit, RepoReport, FixRef, Working, CommitItem, DependencyReport, Detail, FixProposal, Graph, Incident, IncidentRow, IssueList, RcaReport, ReleaseReport, Status } from './types';
 
 const json = (method: string, body?: unknown): RequestInit => ({
   method, headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body),
@@ -44,6 +44,8 @@ export const api = {
   branches: () => request<BranchReport>('/branches'),
   activity: () => request<Activity[]>('/activity'),
   activityItem: (id: string) => request<Activity>(`/activity/${id}`),
+  activityLanes: () => request<LaneView[]>('/activity/lanes'),
+  activityLog: (after = 0) => request<LogEntry[]>(`/activity/log?after=${after}`),
   memory: () => request<MemoryReport>('/memory'),
   addMemory: (item: Partial<MemoryItem>) => request<MemoryItem>('/memory', json('POST', item)),
   removeMemory: (id: string) => fetch(`/api/memory/${id}`, { method: 'DELETE' }),

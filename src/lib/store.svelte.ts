@@ -757,6 +757,9 @@ export function connect() {
       await Promise.all([loadCommits(), loadIssues()]);
     } else if (d.status === 'failed') {
       toast(`Review of ${short} failed`, 'bad', 6000);
+    } else if (d.status !== 'running') {
+      // Code checks finished before the model: they may have closed issues already, so show that now.
+      await loadIssues();
     }
   });
 }

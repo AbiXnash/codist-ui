@@ -4,7 +4,7 @@
   import { api } from '../lib/api';
   import CopyButton from './CopyButton.svelte';
   import { ago } from '../lib/theme';
-  import type { Activity } from '../lib/types';
+  import type { Activity, LaneView, LogEntry } from '../lib/types';
 
   // Everything Codist did and everything the model saw and said, live.
   let items = $state.raw<Activity[]>([]);
@@ -17,6 +17,22 @@
   let view = $state<'prompt' | 'system' | 'response'>('prompt');
   let failed = $state('');
 
+  // What each lane is doing, and the server's log as it happens.
+  let lanes = $state.raw<LaneView[]>([]);
+  let logs = $state.raw<LogEntry[]>([]);
+  let level = $state('info');
+  let follow = $state(true);
+  let now = $state(Date.now());
+  let logEl = $state<HTMLDivElement | null>(null);
+  const RANK: Record<string, number> = { debug: 0, info: 1, warn: 2, error: 3 };
+  const shownLogs = $derived(logs.filter((e) => (RANK[e.level] ?? 1) >= (RANK[level] ?? 1)));
+  const msgOf = (sha: string) => app.commits.find((c) => c.commit.sha.startsWith(sha) || sha.startsWith(c.commit.sha))?.commit.message ?? '';
+  const since = (at?: string) => (at ? secs(Math.max(0, now - new Date(at).getTime())) : '');
+  const clock = (at: string) => new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+  const attrsText = (e: LogEntry) => Object.entries(e.attrs ?? {}).filter(([k]) => k !== 'lib').map(([k, v]) => `${k}=${v}`).join('  ');
+  async function loadLanes() { try { lanes = await api.activityLanes(); } catch { /* the page shows what it last had */ } }
+  $effect(() => { if (follow && shownLogs.length && logEl) logEl.scrollTop = logEl.scrollHeight; });
+
   async function load() {
     try { items = await api.activity(); failed = ''; } catch (e) { failed = (e as Error).message; }
   }
@@ -26,6 +42,21 @@
   }
   onMount(() => {
     void load();
+    void loadLanes();
+    void api.activityLog().then((l) => (logs = l)).catch(() => {});
+    const lanesTimer = setInterval(loadLanes, 1500);
+    const tick = setInterval(() => (now = Date.now()), 1000);
+    const es = new EventSource('/api/activity/stream');
+    es.addEventListener('log', (e) => {
+      const ev = JSON.parse((e as MessageEvent).data) as { log: LogEntry };
+      logs = [...logs, ev.log].slice(-800);
+    });
+    es.addEventListener('call', (e) => {
+      const a = (JSON.parse((e as MessageEvent).data) as { call: Activity }).call;
+      const i = items.findIndex((x) => x.id === a.id);
+      items = i >= 0 ? items.map((x, k) => (k === i ? a : x)) : [a, ...items].slice(0, 300);
+      if (a.id === pickedId) void pick(a.id);
+    });
     const on = (e: Event) => {
       const a = (e as CustomEvent<Activity>).detail;
       const i = items.findIndex((x) => x.id === a.id);
@@ -33,7 +64,7 @@
       if (a.id === pickedId) void pick(a.id);
     };
     window.addEventListener('codist:activity', on);
-    return () => window.removeEventListener('codist:activity', on);
+    return () => { window.removeEventListener('codist:activity', on); es.close(); clearInterval(lanesTimer); clearInterval(tick); };
   });
 
   const kinds = $derived([...new Set(items.map((a) => a.kind))].sort());
@@ -88,6 +119,25 @@
     </ul>
   </aside>
 
+  <div class="right">
+  <section class="lanes" aria-label="Work lanes">
+    {#each lanes as l (l.name)}
+      <div class="lane">
+        <div class="lh"><b>{l.name}</b><span class="faint">{l.count ? `${l.count} waiting` : 'nothing waiting'}</span></div>
+        {#if l.running}
+          <button class="run" onclick={() => goCommit(l.running!)} title={msgOf(l.running)}>
+            <span class="dot running spin"></span><span class="mono">{l.running.slice(0, 7)}</span><span class="t">{msgOf(l.running) || 'working'}</span><span class="faint">{since(l.since)}</span>
+          </button>
+        {:else}<div class="idle faint">Idle</div>{/if}
+        {#if l.waiting.length}
+          <div class="q"><span class="faint">Next</span>{#each l.waiting.slice(0, 4) as w (w)}<button class="chip mono" title={msgOf(w)} onclick={() => goCommit(w)}>{w.slice(0, 7)}</button>{/each}{#if l.count > 4}<span class="faint">+{l.count - 4}</span>{/if}</div>
+        {/if}
+        {#if l.finished.length}
+          <div class="q"><span class="faint">Done</span>{#each l.finished.slice(0, 3) as f (f.sha + f.at)}<button class="chip mono" title={msgOf(f.sha)} onclick={() => goCommit(f.sha)}>{f.sha.slice(0, 7)} · {secs(f.tookMs)}</button>{/each}</div>
+        {/if}
+      </div>
+    {:else}<div class="faint small">Loading lanes…</div>{/each}
+  </section>
   <main>
     {#if !picked}
       <div class="empty">Pick an entry to see exactly what was sent to the model and what it answered.</div>
@@ -139,6 +189,21 @@
       {/if}
     {/if}
   </main>
+  <section class="log" aria-label="Live log">
+    <div class="loghead">
+      <b>Live log</b>
+      <select bind:value={level} aria-label="Lowest level shown"><option value="debug">Debug and up</option><option value="info">Info and up</option><option value="warn">Warnings and errors</option><option value="error">Errors only</option></select>
+      <label class="small"><input type="checkbox" bind:checked={follow} /> Follow</label>
+      <span class="faint small">{shownLogs.length} lines</span>
+      <span class="cp2"><CopyButton text={shownLogs.map((e) => `${clock(e.at)} ${e.level.toUpperCase()} ${e.msg} ${attrsText(e)}`).join('\n')} label="Copy" /></span>
+    </div>
+    <div class="lines" bind:this={logEl}>
+      {#each shownLogs as e (e.seq)}
+        <div class="ll {e.level}"><span class="tm mono">{clock(e.at)}</span><span class="lv">{e.level}</span><span class="m">{e.msg}</span><span class="at mono">{attrsText(e)}</span></div>
+      {:else}<div class="faint small">No log lines yet.</div>{/each}
+    </div>
+  </section>
+  </div>
 </div>
 
 <style>
@@ -161,7 +226,32 @@
   .dot { width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: var(--good); display: inline-block; flex-shrink: 0; }
   .dot.failed { background: var(--bad); } .dot.cancelled { background: var(--text-3); } .dot.running { background: none; border: 1.5px solid var(--accent); border-right-color: transparent; }
   .dot.spin { animation: spin 0.8s linear infinite; }
-  main { min-height: 0; min-width: 0; overflow: auto; padding: 16px 20px 48px; display: flex; flex-direction: column; gap: 10px; }
+  .right { min-width: 0; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) 260px; }
+  main { min-height: 0; min-width: 0; overflow: auto; padding: 16px 20px 24px; display: flex; flex-direction: column; gap: 10px; }
+  .lanes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .lane { display: grid; gap: 6px; align-content: start; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface-2); font-size: 12px; }
+  .lh { display: flex; justify-content: space-between; gap: 8px; }
+  .run { display: grid; grid-template-columns: 10px auto minmax(0, 1fr) auto; align-items: center; gap: 7px; padding: 5px 7px; border: 0; border-radius: var(--r); background: var(--accent-soft); text-align: left; font-size: 12px; }
+  .run .dot { margin-top: 0; }
+  .run .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .idle { padding: 5px 0; }
+  .q { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  .chip { height: 20px; padding: 0 6px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); font-size: 10.5px; color: var(--text-2); }
+  .chip:hover { border-color: var(--border-strong); color: var(--text); }
+  .log { display: flex; flex-direction: column; min-height: 0; border-top: 1px solid var(--border); background: var(--code-bg); }
+  .loghead { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .loghead select { height: 24px; }
+  .cp2 { margin-left: auto; }
+  .lines { flex: 1; min-height: 0; overflow: auto; padding: 4px 0; font: 11.5px/1.55 var(--mono); }
+  .ll { display: grid; grid-template-columns: 64px 48px auto minmax(0, 1fr); gap: 10px; padding: 0 12px; white-space: nowrap; }
+  .ll:hover { background: var(--hover); }
+  .ll .m { color: var(--text); }
+  .ll .at { overflow: hidden; text-overflow: ellipsis; color: var(--text-3); }
+  .ll .tm { color: var(--text-3); }
+  .ll .lv { text-transform: uppercase; font-size: 10px; color: var(--text-3); }
+  .ll.warn .lv, .ll.warn .m { color: var(--warn); }
+  .ll.error .lv, .ll.error .m { color: var(--bad); }
+  .ll.debug .m { color: var(--text-2); }
   .title { display: flex; align-items: center; gap: 8px; }
   h2 { margin: 0; font-size: 15px; font-weight: 600; }
   .facts { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 5px; font-size: 12px; color: var(--text-2); align-items: center; }

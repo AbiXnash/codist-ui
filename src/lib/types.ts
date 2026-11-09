@@ -459,6 +459,11 @@ export interface Activity {
   knowledge?: string[]; note?: string; error?: string; tookMs: number; promptTokens?: number; replyTokens?: number; system?: string; user?: string; response?: string;
 }
 
+/** One lane of work: what runs now, what waits, what just finished. */
+export interface LaneView { name: string; running?: string; since?: string; waiting: string[]; count: number; finished: { sha: string; at: string; tookMs: number }[] }
+/** One log line from the server, streamed live. */
+export interface LogEntry { seq: number; at: string; level: string; msg: string; attrs?: Record<string, string> }
+
 export interface MemoryItem { id: string; at: number; by: string; kind: string; text: string; title?: string; ref?: string; path?: string; snippet?: string; team: boolean }
 
 export interface MemoryReport {
